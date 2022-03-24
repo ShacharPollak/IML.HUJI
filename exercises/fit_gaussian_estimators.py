@@ -46,6 +46,7 @@ def test_univariate_gaussian():
                                yaxis_title="r$\\text{PDF of the samples}$",
                                height=DEFAULT_GRAPH_HEIGHT)).show()
 
+
 def test_multivariate_gaussian():
     # Question 4 - Draw samples and print fitted model
     mu = [0, 0, 4, 0]
@@ -69,11 +70,11 @@ def test_multivariate_gaussian():
         result.append(cur)
     result = np.asarray(result)
     go.Figure([go.Heatmap(x=lin_space, y=lin_space, z=result, colorscale='Viridis')],
-               layout=go.Layout(title=r"$\text{Log-Likelihood As Function Of mu = [f1,0,f3,0]}$",
-               xaxis_title="$\\text{f3}$",
-               yaxis_title="r$\\text{f1}$",
-               height=DEFAULT_GRAPH_HEIGHT*1.4,
-               width=DEFAULT_GRAPH_HEIGHT*1.4)).show()
+              layout=go.Layout(title=r"$\text{Log-Likelihood As Function Of mu = [f1,0,f3,0]}$",
+                               xaxis_title="$\\text{f3}$",
+                               yaxis_title="r$\\text{f1}$",
+                               height=DEFAULT_GRAPH_HEIGHT * 1.4,
+                               width=DEFAULT_GRAPH_HEIGHT * 1.4)).show()
 
     # Question 6 - Maximum likelihood
     max_index = result.argmax()
@@ -81,6 +82,7 @@ def test_multivariate_gaussian():
     col = max_index % 200
     print("f1: " + str(round(lin_space[row], 3)))
     print("f3: " + str(round(lin_space[col], 3)))
+
 
 if __name__ == '__main__':
     np.random.seed(0)
