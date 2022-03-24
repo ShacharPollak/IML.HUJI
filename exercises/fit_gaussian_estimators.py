@@ -82,7 +82,6 @@ def test_multivariate_gaussian():
     print("f1: " + str(round(lin_space[row], 3)))
     print("f3: " + str(round(lin_space[col], 3)))
 
-
 if __name__ == '__main__':
     np.random.seed(0)
     test_univariate_gaussian()
