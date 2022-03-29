@@ -1,5 +1,8 @@
 from __future__ import annotations
 from typing import NoReturn
+
+import numpy.linalg
+
 from ...base import BaseEstimator
 import numpy as np
 from numpy.linalg import pinv
@@ -49,7 +52,9 @@ class LinearRegression(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            X_with_intercept
+            return numpy.linalg.lstsq(X, y)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
