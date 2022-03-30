@@ -1,3 +1,6 @@
+import math
+from math import nan
+
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import AdaBoostClassifier
@@ -18,7 +21,8 @@ def dummy_df(df, todummy_list):
 def prep_X_y(df):
     X = df.drop("cancellation_datetime", 1)
     y = [1 if x is not np.nan else 0 for x in df['cancellation_datetime']]
-    return X, y
+    z = df['cancellation_datetime']
+    return X, y, z
 
 
 # adding columns #
@@ -167,9 +171,12 @@ def process_data(X):
     return X
 
 
-def test_model(X, y):
+def test_model(X, y, y_days):
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         train_size=0.70,
+                                                        random_state=1)
+
+    y_days_train, y_days_test = train_test_split(y_days, train_size=0.70,
                                                         random_state=1)
 
     parameters = {
@@ -187,16 +194,47 @@ def test_model(X, y):
         cv=5,
         scoring='accuracy',
     )
+    # model_adaboost = LinearRegression()
     model_adaboost.fit(X_train, y_train)
     y_hat = model_adaboost.predict(X_test)
     count = 0
-    for y_ex, y_real in zip(y_hat, y_test):
-        if y_ex == y_real:
+
+    model_days = LinearRegression()
+    X_days = X_train
+    X_days['cancel_day'] = y_days_train
+    X_days = X_days.loc[X_days['cancel_day'] > 0]
+    y_days_train = X_days['cancel_day']
+    X_days = X_days.drop(['cancel_day'], 1)
+    model_days.fit(X_days, y_days_train)
+    X_days_test = X_test
+    X_days_test['cancel_day'] = y_days_test
+    X_days_test = X_days_test.loc[X_days_test['cancel_day'] > 0]
+    y_days_test = X_days_test['cancel_day']
+    X_days_test = X_days_test.drop(['cancel_day'], 1)
+
+    y_days_predict = model_days.predict(X_days_test)
+
+    count_yes_can = 0
+
+    y_res = []
+    for item in y_hat:
+        if not item:
+            y_res.append(0)
+        else:
+            y_res.append(y_days_predict[count_yes_can])
+            count_yes_can += 1
+
+    for y_ex, y_real in zip(y_res, y_test):
+        if y_ex == y_real == 0:
             count += 1
+
+        elif abs(y_ex - y_real) < 7:  # i give a 7 day diff as good
+            count += 1
+
     print("the real acc we got is: ", count / len(y_test))
 
 
-def predict(X_train, y_train, X_test, filename):
+def predict(X_train, y_train, X_test, y_days, filename):
     parameters = {
         "n_estimators": [100],
         "learning_rate": [1.],
@@ -212,10 +250,35 @@ def predict(X_train, y_train, X_test, filename):
         cv=5,
         scoring='accuracy',
     )
-    model_adaboost.fit(X_train, y_train)
-    y_hat = model_adaboost.predict(X_test)
-    print("exporting y_hat")
-    pd.DataFrame(y_hat, columns=["predicted_values"]).to_csv(
+    model_adaboost.fit(X_train, y_train)  # model that says if cancel or not
+    y_hat = model_adaboost.predict(X_test)  # y_hat == canceled or not
+
+    model_days = LinearRegression()
+    X_days = X_train
+    X_days['cancel_day'] = y_days
+    X_days = X_days.loc[X_days['cancel_day'] > 0]
+    y_days_train = X_days['cancel_day']
+    X_days = X_days.drop(['cancel_day'], 1)
+    model_days.fit(X_days, y_days_train)
+    # this model tells when cancel will happen
+    y_days_predict = model_days.predict(X_test)
+
+    count_yes_can = 0
+
+    y_res = []
+    for item in y_hat:
+        if not item:
+            y_res.append(0)
+
+        elif 742 <= y_days_predict[count_yes_can] <= 752:
+            y_res.append(1)
+            count_yes_can += 1
+        else:
+            y_res.append(0)
+            count_yes_can += 1
+    print(count_yes_can, len(y_days_predict))
+    print("exporting y_res")
+    pd.DataFrame(y_res, columns=["predicted_values"]).to_csv(
         filename, index=False)
 
 
@@ -241,12 +304,25 @@ def check_percentage(X_train, y_train, X_test, y_test, a):
     # print("acc", auc)
     return count / len(y_test)
 
+def create_day_model(X):
+    func = lambda t: (int(t[:4]) - 2017) * 365 + int(t[5:7]) * 31 + int(
+        t[8:10])
+
+    y = []
+    for day in X['cancellation_datetime']:
+        if isinstance(day, str):
+            y.append(func(day))
+        else:
+            y.append(0)
+    return y
+
 
 if __name__ == '__main__':
     df_train = pd.read_csv('Agoda_cancellation_train.csv')  # 57000
     df_test = pd.read_csv('test_set_week_1.csv') # 800
-    X_train, y_train = prep_X_y(df_train)
+    X_train, y_train, z = prep_X_y(df_train)
     X_train = process_data(X_train)
     X_test = process_data(df_test)
-    # test_model(X_train, y_train)
-    predict(X_train, y_train, X_test, "318196839_318670379_208781005.csv")
+    y_days = create_day_model(df_train)
+    # test_model(X_train, y_train, y_days)
+    predict(X_train, y_train, X_test, y_days, "318196839_318670379_208781005.csv")
