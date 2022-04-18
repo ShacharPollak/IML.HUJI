@@ -7,6 +7,8 @@ from ...base import BaseEstimator
 import numpy as np
 from numpy.linalg import pinv
 
+from ...metrics import mean_square_error
+
 
 class LinearRegression(BaseEstimator):
     """
@@ -53,12 +55,12 @@ class LinearRegression(BaseEstimator):
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
         if self.include_intercept_:
-            X_with_intercept = np.zeros((1, ))
-            X_with_intercept[0] = 1
-            np.append(X_with_intercept, X)
-            self.coefs_ = np.linalg.lstsq(X_with_intercept, y)
+            X_with_intercept = np.c_[np.ones(X.shape[0]), X]
+            self.coefs_ = pinv(X_with_intercept) @ y
+            # self.coefs_ = np.linalg.lstsq(X_with_intercept, y)
         else:
-            self.coefs_ = np.linalg.lstsq(X, y)
+            self.coefs_ = pinv(X) @ y
+            # self.coefs_ = np.linalg.lstsq(X, y)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -74,6 +76,8 @@ class LinearRegression(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
+        if self.include_intercept_:
+            return np.c_[np.ones(X.shape[0]), X] @ self.coefs_
         return X @ self.coefs_
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -94,4 +98,4 @@ class LinearRegression(BaseEstimator):
             Performance under MSE loss function
         """
         predicted = self._predict(X)
-        return mean_square_error()
+        return mean_square_error(predicted, y)

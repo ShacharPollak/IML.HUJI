@@ -1,3 +1,5 @@
+import math
+import random
 from typing import Tuple
 import numpy as np
 import pandas as pd
@@ -33,7 +35,17 @@ def split_train_test(X: pd.DataFrame, y: pd.Series, train_proportion: float = .7
         Responses of test samples
 
     """
-    raise NotImplementedError()
+    shape = X.shape
+    n_samples = shape[0]
+    train_size = math.ceil(train_proportion * n_samples)
+    X_shuffle = X.sample(frac=1)
+    y_shuffle = y.reindex_like(X_shuffle)
+    train_X = X_shuffle[:train_size]
+    train_y = y_shuffle[:train_size]
+    test_X = X_shuffle[train_size:]
+    test_y = y_shuffle[train_size:]
+    return train_X, train_y, test_X, test_y
+
 
 
 def confusion_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:

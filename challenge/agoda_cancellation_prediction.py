@@ -1,8 +1,10 @@
+from IMLearn import BaseEstimator
 from challenge.agoda_cancellation_estimator import AgodaCancellationEstimator
 from IMLearn.utils import split_train_test
 
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
 
 def load_data(filename: str):
