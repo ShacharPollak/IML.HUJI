@@ -1,6 +1,11 @@
 from typing import NoReturn
+
+from . import LDA
 from ...base import BaseEstimator
 import numpy as np
+
+from ...metrics import misclassification_error
+
 
 class GaussianNaiveBayes(BaseEstimator):
     """
@@ -39,7 +44,20 @@ class GaussianNaiveBayes(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        lda = LDA()
+        lda.fit(X, y)
+        self.classes_ = lda.classes_
+        k = len(self.classes_)
+        n_features = X.shape[1]
+        self.mu_ = lda.mu_
+        self.pi_ = lda.pi_
+        self.vars_ = np.asarray([np.var(X[y == c], axis=0, ddof=1) for c in self.classes_])
+        # self.vars_ = np.zeros((k, n_features))
+        # for i, c in enumerate(self.classes_):
+        #     X_c = X[y == c]
+        #     nk = X_c.shape[0]
+        #     for j in range(n_features):
+        #         self.vars_[i][j] = (1/(nk - 1)) * np.sum(X[y == c][j] - self.mu_[i][j])
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -55,7 +73,9 @@ class GaussianNaiveBayes(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        posterior_probability = self.likelihood(X)
+        result = np.asarray([np.argmax(prob) for prob in posterior_probability])
+        return result
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -75,7 +95,16 @@ class GaussianNaiveBayes(BaseEstimator):
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
 
-        raise NotImplementedError()
+        n_samples = X.shape[0]
+        n_classes = len(self.classes_)
+        result = np.zeros((n_samples, n_classes))
+        for sample in range(n_samples):
+            for k in range(len(self.classes_)):
+                for feature in range(X.shape[1]):
+                    result[sample][k] += np.log(self.pi_[k]) - 0.5 * (((X[sample][feature] - self.mu_[k][feature]) **
+                                                                       2) /
+                                                                     self.vars_[k][feature])
+        return result
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -94,4 +123,5 @@ class GaussianNaiveBayes(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        raise NotImplementedError()
+        predicted = self.predict(X)
+        return misclassification_error(y, predicted)
