@@ -47,17 +47,9 @@ class GaussianNaiveBayes(BaseEstimator):
         lda = LDA()
         lda.fit(X, y)
         self.classes_ = lda.classes_
-        k = len(self.classes_)
-        n_features = X.shape[1]
         self.mu_ = lda.mu_
         self.pi_ = lda.pi_
         self.vars_ = np.asarray([np.var(X[y == c], axis=0, ddof=1) for c in self.classes_])
-        # self.vars_ = np.zeros((k, n_features))
-        # for i, c in enumerate(self.classes_):
-        #     X_c = X[y == c]
-        #     nk = X_c.shape[0]
-        #     for j in range(n_features):
-        #         self.vars_[i][j] = (1/(nk - 1)) * np.sum(X[y == c][j] - self.mu_[i][j])
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """

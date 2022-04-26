@@ -86,7 +86,7 @@ def get_ellipse(mu: np.ndarray, cov: np.ndarray):
     xs = (l1 * np.cos(theta) * np.cos(t)) - (l2 * np.sin(theta) * np.sin(t))
     ys = (l1 * np.sin(theta) * np.cos(t)) + (l2 * np.cos(theta) * np.sin(t))
 
-    return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black")
+    return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, showlegend=False, mode="lines", marker_color="black")
 
 
 def compare_gaussian_classifiers():
@@ -99,11 +99,11 @@ def compare_gaussian_classifiers():
 
         # Fit models and predict over training set
         lda = LDA()
-        guassian = GaussianNaiveBayes()
+        gaussian = GaussianNaiveBayes()
         lda.fit(X, y)
-        guassian.fit(X, y)
+        gaussian.fit(X, y)
         lda_predict = lda.predict(X)
-        guassian_predict = guassian.predict(X)
+        guassian_predict = gaussian.predict(X)
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
@@ -111,31 +111,52 @@ def compare_gaussian_classifiers():
         from IMLearn.metrics import accuracy
         lda_accuracy = round(accuracy(y, lda_predict), 2)
         guassian_accuracy = round(accuracy(y, guassian_predict), 2)
+        lda_ellipses = []
+        gaussian_ellipses = []
+        for i in range(len(lda.mu_)):
+            lda_ellipses.append(get_ellipse(lda.mu_[i], lda.cov_))
+        for i in range(len(gaussian.classes_)):
+            cov = np.zeros((2, 2))
+            cov[0][0] = gaussian.vars_[i][0]
+            cov[1][1] = gaussian.vars_[i][1]
+            gaussian_ellipses.append(get_ellipse(gaussian.mu_[i], cov))
 
         fig = make_subplots(rows=1, cols=2,
-                            subplot_titles=("LDA (Accuracy = {})".format(lda_accuracy),
-                                            "Guassian Naive Bayes (Accuracy = {})".format(guassian_accuracy)))
+                            subplot_titles=("Guassian Naive Bayes (Accuracy = {})".format(guassian_accuracy), "LDA (Accuracy = {})".format(lda_accuracy)))
 
         fig.add_trace(
             go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers', showlegend=False, marker=dict(size=10,
                                                                                            color=lda_predict,
                                                                                            line=dict(width=2,
-                                                                                                     color='DarkSlateGrey'),
+                                                                                                color='DarkSlateGrey'),
                                                                                            symbol=y)),
-            row=1, col=1
+            row=1, col=2
         )
+        for i in range(len(lda_ellipses)):
+            fig.add_trace(lda_ellipses[i], row=1, col=2)
+            fig.add_trace(go.Scatter(x=[lda.mu_[i][0]], y=[lda.mu_[i][1]], mode='markers', showlegend=False,
+                                     marker_color="Black",
+                                     marker=dict(color="Black", line=dict(width=2,color='Black'),
+                                                 symbol='x-thin', line_width=7, size=18)), row=1, col=2)
 
         fig.add_trace(
             go.Scatter(x=X[:, 0], y=X[:, 1], mode='markers', showlegend=False, marker=dict(size=10,
                                                                                            color=guassian_predict,
                                                                                            line=dict(width=2,
-                                                                                                     color='DarkSlateGrey'),
+                                                                                                color='DarkSlateGrey'),
                                                                                            symbol=y)),
-            row=1, col=2
+            row=1, col=1
         )
 
-        fig.update_layout(title_text="LDA prediction (left) and Guassian Naive Bayes "
-                                     "Prediction (right) on {} Dataset".format(f))
+        fig.update_layout(title_text="LDA prediction (right) and Guassian Naive Bayes "
+                                     "Prediction (left) on {} Dataset".format(f))
+        for i in range(len(gaussian_ellipses)):
+            fig.add_trace(gaussian_ellipses[i], row=1, col=1)
+            fig.add_trace(go.Scatter(x=[gaussian.mu_[i][0]], y=[gaussian.mu_[i][1]], mode='markers', showlegend=False,
+                                     marker_color="Black",
+                                     marker=dict(color="Black", symbol='x-thin',
+                                                 line=dict(width=2,color='Black'), line_width=7, size=18)), row=1,
+                          col=1)
         fig.show()
 
 
