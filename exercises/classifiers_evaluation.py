@@ -115,11 +115,7 @@ def compare_gaussian_classifiers():
         gaussian_ellipses = []
         for i in range(len(lda.mu_)):
             lda_ellipses.append(get_ellipse(lda.mu_[i], lda.cov_))
-        for i in range(len(gaussian.classes_)):
-            cov = np.zeros((2, 2))
-            cov[0][0] = gaussian.vars_[i][0]
-            cov[1][1] = gaussian.vars_[i][1]
-            gaussian_ellipses.append(get_ellipse(gaussian.mu_[i], cov))
+            gaussian_ellipses.append(get_ellipse(gaussian.mu_[i], np.diag(gaussian.vars_[i])))
 
         fig = make_subplots(rows=1, cols=2,
                             subplot_titles=("Guassian Naive Bayes (Accuracy = {})".format(guassian_accuracy), "LDA (Accuracy = {})".format(lda_accuracy)))
