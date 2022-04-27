@@ -93,7 +93,7 @@ class GaussianNaiveBayes(BaseEstimator):
         for sample in range(n_samples):
             for k in range(len(self.classes_)):
                 for feature in range(X.shape[1]):
-                    result[sample][k] += np.log(self.pi_[k]) - np.log(np.sqrt(2 * np.pi * self.vars_[k][
+                    result[sample][k] += np.log(self.pi_[k])/X.shape[1] - np.log(np.sqrt(2 * np.pi * self.vars_[k][
                         feature])) - (((X[sample][feature] - self.mu_[k][feature]) ** 2) / (2 * self.vars_[k][feature]))
         return result
 
