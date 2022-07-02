@@ -1,6 +1,4 @@
-import numpy as np
-
-from IMLearn.base import BaseModule, BaseLR
+from IMLearn.base import BaseLR
 
 
 class FixedLR(BaseLR):
@@ -46,7 +44,7 @@ class ExponentialLR(FixedLR):
         Parameters:
         ----------
         base_lr: float
-            Learning to be returned at t=0 (i.e eta)
+            Learning to be returned at t=0 (i.e. eta)
 
         decay_rate: float
             Decay rate of learning-rate (i.e. gamma)
