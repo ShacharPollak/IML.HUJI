@@ -39,6 +39,7 @@ class GradientDescent:
         Callable function receives as input any argument relevant for the current GD iteration. Arguments
         are specified in the `GradientDescent.fit` function
     """
+
     def __init__(self,
                  learning_rate: BaseLR = FixedLR(1e-3),
                  tol: float = 1e-5,
@@ -119,4 +120,69 @@ class GradientDescent:
                 Euclidean norm of w^(t)-w^(t-1)
 
         """
-        raise NotImplementedError()
+        if self.out_type_ == 'average':
+            return self._avg(f, X, y)
+        elif self.out_type_ == 'best':
+            return self._best(f, X, y)
+        else:
+            return self._last(f, X, y)
+
+    def _avg(self, f, X, y):
+        cur_x = f.weights
+        last_x = cur_x
+        delta = False
+        _sum = cur_x
+        t = 0
+        while (not delta or self.tol_ < delta) and t < self.max_iter_:
+            eta = self.learning_rate_.lr_step(t=t)
+            f_val = f.compute_output(X=X, y=y)
+            f_jacobian = f.compute_jacobian(X=X, y=y)
+            cur_x = last_x - eta * f_jacobian
+            _sum = np.add(_sum, cur_x)
+            delta = np.linalg.norm(cur_x - last_x)
+            self.callback_(solver=self, weights=last_x, val=f_val,
+                           grad=f_jacobian, t=t, eta=eta, delta=delta)
+            f.weights = cur_x
+            last_x = cur_x
+            t = t + 1
+        return _sum / (t + 1)
+
+    def _best(self, f, X, y):
+        cur_x = f.weights
+        last_x = cur_x
+        delta = False
+        best = cur_x
+        lowest = f.compute_output(X=X, y=y)
+        t = 0
+        while (not delta or self.tol_ < delta) and t < self.max_iter_:
+            eta = self.learning_rate_.lr_step(t=t)
+            f_val = f.compute_output(X=X, y=y)
+            if f_val < lowest:
+                lowest = f_val
+                best = last_x
+            f_jacobian = f.compute_jacobian(X=X, y=y)
+            cur_x = last_x - eta * f_jacobian
+            delta = np.linalg.norm(cur_x - last_x)
+            self.callback_(solver=self, weights=last_x, val=f_val, grad=f_jacobian, t=t, eta=eta, delta=delta)
+            f.weights = cur_x
+            last_x = cur_x
+            t = t + 1
+        return best
+
+    def _last(self, f, X, y):
+        cur_x = f.weights
+        last_x = cur_x
+        delta = False
+        _sum = cur_x
+        t = 0
+        while (not delta or self.tol_ < delta) and t < self.max_iter_:
+            eta = self.learning_rate_.lr_step(t=t)
+            f_val = f.compute_output(X=X, y=y)
+            f_jacobian = f.compute_jacobian(X=X, y=y)
+            cur_x = last_x - eta * f_jacobian
+            delta = np.linalg.norm(cur_x - last_x)
+            self.callback_(solver=self, weights=last_x, val=f_val, grad=f_jacobian, t=t, eta=eta, delta=delta)
+            f.weights = cur_x
+            last_x = cur_x
+            t = t + 1
+        return cur_x

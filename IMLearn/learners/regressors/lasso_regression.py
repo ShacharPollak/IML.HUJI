@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import NoReturn
 from ...base import BaseEstimator, BaseModule
-from ...desent_methods.gradient_descent import GradientDescent
+from ...desent_methods.gradient_descent_mine import GradientDescent
 import numpy as np
 
 

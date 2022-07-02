@@ -47,8 +47,8 @@ def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
     train_scores = []
     validation_scores = []
     for i in range(cv):
-        X_all_but_i = np.asarray(np.concatenate([X[0:i*chunk_size], X[(i+1)*chunk_size:]]))
-        y_all_but_i = np.asarray(np.concatenate([y[0:i*chunk_size], y[(i+1)*chunk_size:]]))
+        X_all_but_i = np.asarray(np.concatenate([X[0:i*chunk_size], X[(i+1)*chunk_size:]], axis=0))
+        y_all_but_i = np.asarray(np.concatenate([y[0:i*chunk_size], y[(i+1)*chunk_size:]], axis=0))
         estimator.fit(X_all_but_i, y_all_but_i)
         prediction_on_train = estimator.predict(X_all_but_i)
         prediction_on_validation = estimator.predict(X_chunks[i])
